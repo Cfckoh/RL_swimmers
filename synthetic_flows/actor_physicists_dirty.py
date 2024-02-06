@@ -5,38 +5,34 @@ import numpy as np
 from nn_architectures import PolicyNet
 import copy
 
-# hyper that may want to tune later
-BASELINE_SCALE = 1.5
 
 class expected_baseline:
-    def __init__(self, PHI,D,r_d,scaling=0.5, nu = .025):
+        
+    def __init__(self, PHI,D, kappa, nu = .01):
+        self.dims=2
         self.phi = PHI
-        self.D = D
-        self.r_d = r_d
-        self.scaling = scaling
+        self.D_tilde = D*(self.dims+2)*(self.dims-1)
         self.beta = 1.
         self.nu = nu
-        self.cramer_d2 = 1/D
-        self.a = self.D + 1/self.cramer_d2
-
-
-
-
-    def evaluate_prescribed(self, seperation):
-        #b = self.b
-        first_term = (seperation**2/self.D)*np.log(seperation/self.r_d)
-        second_term = (self.r_d**2*(self.phi-self.D))/(self.nu*(self.phi-self.a))
-        return -(self.phi**2 + self.beta) * (first_term + second_term)
+        # a useful intermediate value used in the baseline calculations
+        self.block = nu + 2*PHI - self.D_tilde
+        self.kappa = kappa
     
-    def evaluate_prescribed_fitted(self, seperation):
-        #b = self.b
-        first_term = (seperation**2/self.D)*np.log(seperation/self.r_d)
-        second_term = (self.r_d**2*(self.phi-self.D))/(self.nu*(self.phi-self.a))
-        return -(0.47851218*first_term + 0.00547239*second_term)
-        
-    #def evaluate_prescribed(self, seperation):
-    #    return self.scaling*np.power((self.rd/seperation),(2*(self.phi-self.D)/self.D))/seperation
+    def A(self, time_remaining):
+        num = (self.beta + self.phi**2)*(1-np.exp(-time_remaining*self.block))
+        denom = self.block
+        return num/denom
+    
+    def B(self, time_remaining):
+        first_term = self.dims * self.kappa * (self.beta + self.phi**2) / (self.nu*(2*self.phi-self.D_tilde))
+        second_term = 1 - np.exp(-self.nu*time_remaining) - self.nu * (1-np.exp(-time_remaining*self.block))/self.block
+        return first_term*second_term
 
+    def evaluate_prescribed(self, seperation, time_remaining):
+        return self.A(time_remaining)*seperation**2 + self.B(time_remaining)
+    
+    def evaluate_prescribed_scaled(self, seperation, time_remaining,c1,c2):
+        return c1*self.A(time_remaining)*seperation**2 + c2*self.B(time_remaining)
 
 
 
@@ -44,7 +40,7 @@ class expected_baseline:
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DynamicPhiAgent:
-    def __init__(self, state_size=2, hidden_size=32, num_layers=3, actor_lr=0.00001, discount=1., action_scale=1.):
+    def __init__(self, state_size=2, hidden_size=32, num_layers=3, actor_lr=0.00001, discount=.99, action_scale=1.):
         self.actor_net = PolicyNet(input_size=state_size, output_size=2, num_layers=num_layers, hidden_size=hidden_size, action_scale=action_scale)
         self.actor_optimizer = optim.Adam(self.actor_net.parameters(), lr=actor_lr)
         self.discount = discount
@@ -73,9 +69,10 @@ class DynamicPhiAgent:
         # boot strap a tunable baseline or only keep the last n actions?
         # also how to phase in the baseline slowly
 
+        # TODO FIGURE OUT HOW TO EVALUATE TIME REMAINING
 
-        approx_value = baseline_aproximator.evaluate_prescribed(torch.linalg.norm(state_t, axis=1)).view(-1,1)
-        sampled_q_val = reward_t + baseline_aproximator.evaluate_prescribed(torch.linalg.norm(next_state_t, axis=1)).view(-1,1)
+        approx_value = baseline_aproximator.evaluate_prescribed(torch.linalg.norm(state_t, axis=1),time_remaining).view(-1,1)
+        sampled_q_val = reward_t + baseline_aproximator.evaluate_prescribed(torch.linalg.norm(next_state_t, axis=1),time_remaining-time_step).view(-1,1)* self.discount
         #approx_value = baseline_aproximator.mixed_evaluation(torch.linalg.norm(state_t, axis=1),time_remaining,decay_term).view(-1,1)
         #sampled_q_val = reward_t + baseline_aproximator.mixed_evaluation(torch.linalg.norm(next_state_t, axis=1),time_remaining+time_step,decay_term).view(-1,1)
         advantage_t = sampled_q_val - approx_value 
@@ -139,16 +136,18 @@ if __name__=="__main__":
 
 
     #for baseline_phi in range(0,21):
-    # DOES NOT MAKE SENSE FO PHI < 0.5
-    for baseline_phi in range(7,8):
+    for baseline_phi in range(3,4):
         env = synthetic_env()
-        env.deltaT= 0.05#0.005
+        env.deltaT= 0.05 # 0.005
         env.limit=10.
+        nu = 0.99
+        env.kappa = 0.001
+        env.D = 0.1
         rd = np.sqrt(np.sqrt(env.kappa/env.D))
-        phi_aproximator = expected_baseline(baseline_phi/10,env.D,rd)
+        phi_aproximator = expected_baseline(baseline_phi/10,env.D,env.kappa,nu=nu)
 
-        agent = DynamicPhiAgent(action_scale=5.)
-        #env = ABCflow(a=0.,b=0.,c=0.)
+        agent = DynamicPhiAgent(action_scale=5.,discount=np.exp(-nu*env.deltaT))
+        #env = ABCflow(a=0.,b=0.,c=0.)  
         num_ep=250
         stats_actor_loss, rewards_per_episode = [], []
         verbose_episodes = 50
@@ -186,7 +185,6 @@ if __name__=="__main__":
 
                 actor_loss, ep_advantages = agent.train(state_np_arr, phi_list, reward_list, next_state_arr, phi_aproximator, time_remaining,env.deltaT, decay_term,verbose = verbose)
                 stats_actor_loss.append(actor_loss)
-                
 
                 state = next_state
             #print(ep_advantages.T.shape)
