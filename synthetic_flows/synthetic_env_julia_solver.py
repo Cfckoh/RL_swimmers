@@ -24,7 +24,6 @@ class synthetic_env():
         self.start_sep = start_sep
         self.sep_vec = self.rng.random(2) - 0.5
         self.sep_vec = self.sep_vec*start_sep/np.linalg.norm(self.sep_vec)
-        # uniform random generation anywhere in a two pi periodic space
         self.reward=0
         self.deltaT=0.1 # environment step size
         self.time_step=0
@@ -51,7 +50,8 @@ class synthetic_env():
         self.sep_vec = new_state[0:2]
         self.sigmas = new_state[2:]
         self.time_step+=1
-        return penalty
+        reward = - penalty
+        return reward
 
 
     def eval_step(self,phi):
@@ -71,7 +71,7 @@ class synthetic_env():
         b_term1 = dims * self.kappa * (self.beta + phi**2) / (self.nu*(2*phi-d_tilde))
         b_term2 = 1 - np.exp(-self.nu*time_remaining) - self.nu * (1-np.exp(-time_remaining*block))/block
         b = b_term1 * b_term2
-        return a*self.dist()**2 + b
+        return -(a*self.dist()**2 + b)
 
 
 

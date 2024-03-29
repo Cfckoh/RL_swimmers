@@ -24,5 +24,5 @@ class FixedPhi():
         self.phi=phi_value
 
     def sample_action(self, state):
-        return state*self.phi
+        return self.phi
 
