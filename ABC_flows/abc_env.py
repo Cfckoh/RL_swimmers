@@ -7,12 +7,10 @@ import numpy as np
 
 class ABC_env():
     """
-    Environment is 3D ABC environment!! 
+    3D ABC flow environment
     """
     def __init__(self,A,B,C,start_sep, beta, kappa, D, nu,seed=1):
-        """ 
-        - proper value for D should be derived from sampled lyapunov exponent
-        """
+
         Main.include("abc_numerics.jl")
 
         super().__init__()
@@ -21,10 +19,10 @@ class ABC_env():
         self.C = C
         self.rng = np.random.default_rng(seed=seed)
         self.start_sep = start_sep
-        self.sep_vec = self.rng.random(3) - 0.5
-        self.sep_vec = self.sep_vec*start_sep/np.linalg.norm(self.sep_vec)
+        sep_vec = self.rng.random(3) - 0.5
+        sep_vec = sep_vec*start_sep/np.linalg.norm(sep_vec)
         self.passive = (self.rng.random(3) - 0.5) * 2 * np.pi
-        self.active = self.active = self.passive + self.sep_vec
+        self.active = self.active = self.passive + sep_vec
         self.reward=0
         self.deltaT=0.1 # environment step size
         self.time_step=0
@@ -37,10 +35,10 @@ class ABC_env():
     # need to track active and passive not just separation vector
 
     def reset(self):
-        self.sep_vec = self.rng.random(3) - 0.5
-        self.sep_vec = self.sep_vec*self.start_sep/np.linalg.norm(self.sep_vec)
+        sep_vec = self.rng.random(3) - 0.5
+        sep_vec = sep_vec*self.start_sep/np.linalg.norm(sep_vec)
         self.passive = (self.rng.random(3) - 0.5) * 2 * np.pi
-        self.active = self.active = self.passive + self.sep_vec
+        self.active = self.active = self.passive + sep_vec
         self.reward=0
         self.time_step=0
 
@@ -49,7 +47,6 @@ class ABC_env():
         phi = action
         state_string = np.array2string(np.append(self.passive,self.active), separator=",")
         self.passive,self.active, penalty = Main.eval(f"envStep({self.A},{self.B},{self.C},{phi}, {self.nu}, {self.kappa}, {self.beta}, {state_string},{self.deltaT})") 
-        self.sep_vec = self.passive - self.active
         self.time_step += 1
         reward = -penalty
         return reward
@@ -59,7 +56,7 @@ class ABC_env():
         """
         Returns the baseline aproximate for the given phi value and the current state
 
-        NOTE: In training you should always evaluate for a fixed phi not the phi the agent picks. 
+        NOTE: PHI should not be a function of agents actions otherwise we lose policy gradient convergence guarentees 
 
         """
 
@@ -78,13 +75,13 @@ class ABC_env():
 
 
     def getState(self):
-        return self.sep_vec
+        return self.passive - self.active
     
     def isOver(self):
         return self.time_step * self.deltaT >= self.limit
         
     def dist(self):
-        return np.linalg.norm(self.sep_vec)
+        return np.linalg.norm(self.passive - self.active)
 
     def getTime(self):
         return self.time_step * self.deltaT

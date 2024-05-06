@@ -1,0 +1,9 @@
+BETA: 0.1
+D: 0.1
+NU: 0.99
+PHI: 0.5
+delta_r: 0.001
+delta_t: 0.05
+kappa: 0.001
+num_eps: 50000
+t_end: 10.0

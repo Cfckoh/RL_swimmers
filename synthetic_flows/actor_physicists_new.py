@@ -108,9 +108,9 @@ if __name__=="__main__":
     dims = 2
 
 
-    for i in range(1,2):
+    for i in [0.11,0.1999,0.2001]:
         # TODO SELECT BASELINE PHI
-        baseline_phi = 0.199#i/10#-0.001#i/10 + 0.001 # add a tiny bit so that we don't get a divide by 0 error around pathological numbers
+        baseline_phi = i#i/10#-0.001#i/10 + 0.001 # add a tiny bit so that we don't get a divide by 0 error around pathological numbers
         # intialize environment and agents with above params
         agent = RL_phi_agent()
         env = synthetic_env(start_sep=start_sep,beta=beta,kappa=kappa,D=D,nu=nu)

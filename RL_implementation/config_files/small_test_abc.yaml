@@ -1,0 +1,13 @@
+A: 1.0
+B: 0.7
+BETA: 0.1
+C: 0.43
+D: 0.1
+NU: 0.99
+PHI: 0.9
+delta_t: 0.05
+kappa: 0.001
+num_eps: 50
+start_sep: 0.6283185307179586
+t_end: 10.0
+verbose_episodes: 100
