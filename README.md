@@ -16,6 +16,6 @@ This project contains three directories each with there own README. See a direct
 
 - baseline_evaluation: contains scripts for empircally comparing the analytic baseline to observed values in abc and batchelor flows for different parameters
 - RL_implmentation: contains scripts for training our actor physicists models in batchelor and abc flows for different parameters
-- results_analysis: contains scripts and notebooks for comparing agents (TODO) (may omit)
 
-NOTE: Directories may contain folders intended for saving figures, csvs, or trained models. These are empty but the appropriate files are saved to them when runing the scripts.
+
+NOTE: Directories contain folders intended for saving figures, csvs, or trained models. These are empty but the appropriate files are saved to them when runing the scripts.
