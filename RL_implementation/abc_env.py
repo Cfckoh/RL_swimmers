@@ -1,6 +1,11 @@
-import julia
-jl = julia.Julia(sysimage="julia_img.so")
+from julia.api import Julia
+jl = Julia(compiled_modules=False)
 from julia import Main
+
+# Use if using a julia image this is faster see: https://pyjulia.readthedocs.io/en/latest/troubleshooting.html 
+#import julia
+#jl = julia.Julia(sysimage="julia_img.so")
+#from julia import Main
 
 import numpy as np
 

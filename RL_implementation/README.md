@@ -1,4 +1,3 @@
-
 ## Training Actor Physicist
 Training an agent can simply be done from the command line like so:
 
@@ -15,3 +14,6 @@ In confif_files there is a interactive python notebook for generating a config f
 
 ## Comparing Agents
 abc_agent_comparison.ipynb compares agents of various types including physics agnostic actor critic type methods, fixed phi, and our actor physicists
+
+### Note on calling julia in python
+Currently scripts do not require one to have a julia image however for speed I recomend doing so. If using a julia .so image update ac_env and batchelor_env by removing the comments for importing julia from an image. See https://pyjulia.readthedocs.io/en/latest/troubleshooting.html for how to make an image.

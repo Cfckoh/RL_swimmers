@@ -9,7 +9,7 @@ Python conda environment included in environment.yml. The following command will
 conda env create -f py_environment.yml
 ```
 
-Python code also interacts with Julia where the differential equation solvers are implemented. To set up the appropriate Julia environment... TODO instructions for Julia
+Python code also interacts with Julia where the differential equation solvers are implemented. For julia ensure you have DifferentialEquations, LinearAlgebra, Random, and PyCall
 
 ## Outline
 This project contains three directories each with there own README. See a directory specfic README for instructions on runing the code. A high level descriptiion of each directory is given below:
