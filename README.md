@@ -2,6 +2,7 @@
 Work done at the University of Arizona exploring control of RL swimmers in Batchelor and ABC flows. Archive link: (coming soon)
 
 ## Requirements
+NOTE: There is a known issue with the environment as the versions of gym and stable-baselines3 are depreciated and no longer installable with up to date versions of pip. The implemented actor-physcists can be trained and tested without these packages. However, comparison to the out of box stable-baseline3 RL implementations are not possible without these pacakges.
 
 Python conda environment included in environment.yml. The following command will create a python conda environment named stableBase3.
 
